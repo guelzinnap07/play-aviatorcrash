@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator Pro - Simulador Real</title>
+    <style>
+        :root {
+            --primary: #ffaa00;
+            --primary-hover: #ffbb22;
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --bg-input: #21262d;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --success: #2ea043;
+            --danger: #da3633;
+            --border: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 30px;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-balance-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-input);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .balance-amount {
+            font-weight: 700;
+            color: var(--success);
+            font-size: 0.95rem;
+        }
+
+        .btn-deposit {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .main-container {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Histórico de Velas */
+        .multiplier-history {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 4px 0;
+            scrollbar-width: none;
+        }
+        .multiplier-history::-webkit-scrollbar {
+            display: none;
+        }
+        .hist-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+        }
+        .hist-badge.low { color: #58a6ff; }
+        .hist-badge.mid { color: var(--primary); }
+        .hist-badge.high { color: #bc8cff; }
+
+        /* Área do Jogo / Canvas */
+        .game-screen {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            height: 280px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .center-display {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .current-multiplier {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .game-status-text {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        /* Painel de Apostas */
+        .betting-panels {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        @media(min-width: 600px) {
+            .betting-panels {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .bet-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bet-controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 55%;
+        }
+
+        .input-group button {
+            background: #30363d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .quick-chips {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            width: 42%;
+        }
+
+        .chip {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            padding: 6px 2px;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .chip:active { background: var(--border); }
+
+        .auto-cashout-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .auto-cashout-row input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            width: 70px;
+            text-align: center;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: 0.2s;
+        }
+
+        .btn-action.bet {
+            background: var(--success);
+            color: white;
+        }
+        .btn-action.bet:active { opacity: 0.8; }
+
+        .btn-action.cashout {
+            background: var(--primary);
+            color: #000;
+            animation: pulseBtn 1s infinite alternate;
+        }
+
+        .btn-action:disabled {
+            background: var(--border);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            animation: none;
+        }
+
+        @keyframes pulseBtn {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            width: 90%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+        }
+        .pix-qrcode-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .pix-key-input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            text-align: center;
+            width: 100%;
+        }
+        .btn-close-modal {
+            background: var(--border);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">🚀 Aviator Pro</div>
+        <div class="user-balance-box">
+            <span>Saldo:</span>
+            <span class="balance-amount" id="userBalance">R$ 100,00</span>
+            <button class="btn-deposit" onclick="openDepositModal()">+ Pix</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Histórico de Velas -->
+        <div class="multiplier-history" id="historyContainer">
+            <div class="hist-badge mid">1.45x</div>
+            <div class="hist-badge low">1.12x</div>
+            <div class="hist-badge high">12.50x</div>
+            <div class="hist-badge mid">2.10x</div>
+        </div>
+
+        <!-- Tela do Jogo -->
+        <div class="game-screen">
+            <canvas id="gameCanvas"></canvas>
+            <div class="center-display">
+                <div class="current-multiplier" id="displayMultiplier">1.00x</div>
+                <div class="game-status-text" id="displayStatus">Aguardando Próxima Rodada</div>
+            </div>
+        </div>
+
+        <!-- Painéis de Apostas (Duplo) -->
+        <div class="betting-panels">
+            <!-- Painel 1 -->
+            <div class="bet-card">
+                <div class="bet-controls-row">
+                    <div class="input-group">
+                        <button onclick="adjustBet(1, -5)">-</button>
+                        <input type="number" id="betInput1" value="10.00" step="5">
+                        <button onclick="adjustBet(1, 5)">+</button>
+                    </div>
+                    <div class="quick-chips">
+                        <div class="chip" onclick="setBet(1, 10)">10</div>
+                        <div class="chip" onclick="setBet(1, 25)">25</div>
+                        <div class="chip" onclick="setBet(1, 50)">50</div>
+                        <div class="chip" onclick="setBet(1, 100)">100</div>
+                    </div>
+                </div>
+                <div class="auto-cashout-row">
+                    <span>Auto Retirada (Cashout)</span>
+                    <input type="number" id="autoCashout1" value="2.00" step="0.1" placeholder="Ex: 2.00">
+                </div>
+                <button class="btn-action bet" id="btnBet1" onclick="toggleBet(1)">Apostar (R$ 10,00)</button>
+            </div>
+
+            <!-- Painel 2 -->
+            <div class="bet-card">
+                <div class="bet-controls-row">
+                    <div class="input-group">
+                        <button onclick="adjustBet(2, -5)">-</button>
+                        <input type="number" id="betInput2" value="10.00" step="5">
+                        <button onclick="adjustBet(2, 5)">+</button>
+                    </div>
+                    <div class="quick-chips">
+                        <div class="chip" onclick="setBet(2, 10)">10</div>
+                        <div class="chip" onclick="setBet(2, 25)">25</div>
+                        <div class="chip" onclick="setBet(2, 50)">50</div>
+                        <div class="chip" onclick="setBet(2, 100)">100</div>
+                    </div>
+                </div>
+                <div class="auto-cashout-row">
+                    <span>Auto Retirada (Cashout)</span>
+                    <input type="number" id="autoCashout2" value="5.00" step="0.1" placeholder="Ex: 5.00">
+                </div>
+                <button class="btn-action bet" id="btnBet2" onclick="toggleBet(2)">Apostar (R$ 10,00)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pix / Depósito -->
+    <div class="modal" id="depositModal">
+        <div class="modal-content">
+            <div class="modal-title">Depositar via Pix Fictício</div>
+            <div class="pix-qrcode-box">
+                <!-- QR Code Gerado por SVG Simples -->
+                <svg width="140" height="140" viewBox="0 0 33 33" style="shape-rendering: crispEdges;">
+                    <rect width="33" height="33" fill="#fff"/>
+                    <path d="M0 0h10v10H0zM3 3h4v4H3zM23 0h10v10H23zM26 3h4v4H26zM0 23h10v10H0zM3 26h4v4H3z" fill="#000"/>
+                    <path d="M12 2h3v2h-3zM16 1h2v3h-2zM12 6h2v3h-2zM19 2h3v2h-3zM6 12h2v3H6zM2 16h3v2H2zM10 14h3v3h-3zM15 12h3v3h-3zM20 12h2v3h-2zM24 12h3v3h-3zM28 12h3v3h-3zM12 19h3v3h-3zM16 18h2v3h-2zM21 18h3v3h-3zM25 18h3v3h-3zM12 24h2v3h-2zM16 24h3v3h-3zM20 24h3v3h-3zM24 24h3v3h-3zM28 24h3v3h-3z" fill="#000"/>
+                </svg>
+            </div>
+            <input type="text" class="pix-key-input" readonly value="00020126580014br.gov.bcb.pix...">
+            <button class="btn-action bet" onclick="simulatePixPayment()">Simular Pagamento Pix (+R$ 100)</button>
+            <button class="btn-close-modal" onclick="closeDepositModal()">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        let balance = 100.00;
+        let gameState = 'waiting'; // waiting, running, crashed
+        let currentMultiplier = 1.00;
+        let targetCrash = 1.00;
+        let gameStartTime = 0;
+        
+        // Estado das Apostas
+        let bets = {
+            1: { active: false, amount: 10, cashedOut: false, win: 0 },
+            2: { active: false, amount: 10, cashedOut: false, win: 0 }
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function updateUI() {
+            document.getElementById('userBalance').innerText = `R$ ${balance.toFixed(2).replace('.', ',')}`;
+            
+            // Botão 1
+            let btn1 = document.getElementById('btnBet1');
+            if (gameState === 'running') {
+                if (bets[1].active && !bets[1].cashedOut) {
+                    btn1.innerText = `Retirar (R$ ${(bets[1].amount * currentMultiplier).toFixed(2)})`;
+                    btn1.className = 'btn-action cashout';
+                } else {
+                    btn1.innerText = bets[1].active ? 'Aguardando Próxima' : 'Apostado';
+                    btn1.className = 'btn-action';
+                    btn1.disabled = true;
+                }
+            } else {
+                let val1 = parseFloat(document.getElementById('betInput1').value) || 10;
+                btn1.innerText = bets[1].active ? 'Cancelar Aposta' : `Apostar (R$ ${val1.toFixed(2)})`;
+                btn1.className = bets[1].active ? 'btn-action' : 'btn-action bet';
+                btn1.style.background = bets[1].active ? 'var(--danger)' : 'var(--success)';
+                btn1.disabled = false;
+            }
+
+            // Botão 2
+            let btn2 = document.getElementById('btnBet2');
+            if (gameState === 'running') {
+                if (bets[2].active && !bets[2].cashedOut) {
+                    btn2.innerText = `Retirar (R$ ${(bets[2].amount * currentMultiplier).toFixed(2)})`;
+                    btn2.className = 'btn-action cashout';
+                } else {
+                    btn2.innerText = bets[2].active ? 'Aguardando Próxima' : 'Apostado';
+                    btn2.className = 'btn-action';
+                    btn2.disabled = true;
+                }
+            } else {
+                let val2 = parseFloat(document.getElementById('betInput2').value) || 10;
+                btn2.innerText = bets[2].active ? 'Cancelar Aposta' : `Apostar (R$ ${val2.toFixed(2)})`;
+                btn2.className = bets[2].active ? 'btn-action' : 'btn-action bet';
+                btn2.style.background = bets[2].active ? 'var(--danger)' : 'var(--success)';
+                btn2.disabled = false;
+            }
+        }
+
+        function setBet(panelId, value) {
+            if (gameState !== 'waiting') return;
+            document.getElementById(`betInput${panelId}`).value = value.toFixed(2);
+            updateUI();
+        }
+
+        function adjustBet(panelId, delta) {
+            if (gameState !== 'waiting') return;
+            let input = document.getElementById(`betInput${panelId}`);
+            let val = parseFloat(input.value) || 0;
+            val = Math.max(5, val + delta);
+            input.value = val.toFixed(2);
+            updateUI();
+        }
+
+        function toggleBet(panelId) {
+            let inputVal = parseFloat(document.getElementById(`betInput${panelId}`).value) || 0;
+            
+            if (gameState === 'running') {
+                // Fazer Cashout Manual
+                if (bets[panelId].active && !bets[panelId].cashedOut) {
+                    let winAmount = bets[panelId].amount * currentMultiplier;
+                    balance += winAmount;
+                    bets[panelId].cashedOut = true;
+                    updateUI();
+                }
+                return;
+            }
+
+            // Registrar ou Cancelar Aposta antes do jogo começar
+            if (!bets[panelId].active) {
+                if (balance < inputVal) {
+                    alert("Saldo insuficiente! Faça um depósito Pix.");
+                    return;
+                }
+                balance -= inputVal;
+                bets[panelId].amount = inputVal;
+                bets[panelId].active = true;
+                bets[panelId].cashedOut = false;
+            } else {
+                balance += bets[panelId].amount;
+                bets[panelId].active = false;
+            }
+            updateUI();
+        }
+
+        // Motor de Geração Aleatória de Velas (RTP ~97%)
+        function calculateCrashPoint() {
+            let rand = Math.random();
+            if (rand < 0.04) return 1.00;
+            let crash = 0.99 / (1.0 - Math.random());
+            return Math.min(parseFloat(crash.toFixed(2)), 100.00);
+        }
+
+        // Loop Principal do Jogo
+        let countdown = 5.0;
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState === 'waiting') {
+                countdown -= 0.05;
+                document.getElementById('displayMultiplier').innerText = `${countdown.toFixed(1)}s`;
+                document.getElementById('displayStatus').innerText = 'Próxima rodada em...';
+                
+                if (countdown <= 0) {
+                    startNewGame();
+                }
+            } else if (gameState === 'running') {
+                let elapsed = (Date.now() - gameStartTime) / 10            } else if (gameState === 'running') {
+                let elapsed = (Date.now() - gameStartTime) / 1000;
+                currentMultiplier = Math.max(1.00, Math.pow(1.07, elapsed * 2.2));
+
+                if (currentMultiplier >= targetCrash) {
+                    currentMultiplier = targetCrash;
+                    triggerCrash();
+                } else {
+                    document.getElementById('displayMultiplier').innerText = `${currentMultiplier.toFixed(2)}x`;
+                    document.getElementById('displayStatus').innerText = 'Subindo...';
+
+                    [1, 2].forEach(id => {
+                        if (bets[id].active && !bets[id].cashedOut) {
+                            let autoVal = parseFloat(document.getElementById(`autoCashout${id}`).value) || 0;
+                            if (autoVal > 1.00 && currentMultiplier >= autoVal) {
+                                let winAmount = bets[id].amount * autoVal;
+                                balance += winAmount;
+                                bets[id].cashedOut = true;
+                            }
+                        }
+                    });
+                    updateUI();
+                }
+                drawFlightAnimation(elapsed);
+            } else if (gameState === 'crashed') {
+                drawCrashAnimation();
+            }
+
+            requestAnimationFrame(() => {
+                setTimeout(gameLoop, 50);
+            });
+        }
+
+        function startNewGame() {
+            gameState = 'running';
+            currentMultiplier = 1.00;
+            targetCrash = calculateCrashPoint();
+            gameStartTime = Date.now();
+
+            [1, 2].forEach(id => {
+                if (bets[id].active) {
+                    bets[id].cashedOut = false;
+                }
+            });
+            updateUI();
+        }
+
+        function triggerCrash() {
+            gameState = 'crashed';
+            document.getElementById('displayMultiplier').innerText = `${targetCrash.toFixed(2)}x`;
+            document.getElementById('displayStatus').innerText = 'CRASHED!';
+            document.getElementById('displayStatus').style.color = 'var(--danger)';
+
+            addToHistory(targetCrash);
+
+            [1, 2].forEach(id => {
+                if (bets[id].active && !bets[id].cashedOut) {
+                    bets[id].active = false;
+                }
+            });
+            updateUI();
+
+            setTimeout(() => {
+                countdown = 4.0;
+                gameState = 'waiting';
+                document.getElementById('displayStatus').style.color = 'var(--text-muted)';
+                [1, 2].forEach(id => { bets[id].active = false; });
+                updateUI();
+            }, 3000);
+        }
+
+        function addToHistory(val) {
+            let container = document.getElementById('historyContainer');
+            let badge = document.createElement('div');
+            badge.className = `hist-badge ${val < 2.0 ? 'low' : val < 10.0 ? 'mid' : 'high'}`;
+            badge.innerText = `${val.toFixed(2)}x`;
+            container.prepend(badge);
+            if (container.children.length > 10) container.lastChild.remove();
+        }
+
+        function drawFlightAnimation(t) {
+            let w = canvas.width;
+            let h = canvas.height;
+
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            ctx.quadraticCurveTo(w * 0.5, h * 0.8, w * Math.min(1, t / 10), h * Math.max(0.1, 1 - (currentMultiplier / 15)));
+            ctx.strokeStyle = 'var(--primary)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            let planeX = w * Math.min(0.8, t / 10);
+            let planeY = h * Math.max(0.15, 1 - (currentMultiplier / 15));
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(planeX, planeY, 6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawCrashAnimation() {
+            let w = canvas.width;
+            let h = canvas.height;
+            ctx.fillStyle = 'rgba(218, 54, 51, 0.15)';
+            ctx.fillRect(0, 0, w, h);
+        }
+
+        function openDepositModal() {
+            document.getElementById('depositModal').classList.add('active');
+        }
+        function closeDepositModal() {
+            document.getElementById('depositModal').classList.remove('active');
+        }
+        function simulatePixPayment() {
+            balance += 100.00;
+            updateUI();
+            closeDepositModal();
+            alert("Pagamento Pix simulado com sucesso! R$ 100,00 adicionados à sua banca.");
+        }
+
+        updateUI();
+        gameLoop();
+    </script>
+</body>
+</html>
