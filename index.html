@@ -480,7 +480,7 @@
             cursor: pointer;
         }
 
-        /* Painel Admin Secreto (Apenas para o Miguel) */
+        /* Painel Admin Secreto (Exclusivo para o Miguel) */
         .admin-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -523,7 +523,7 @@
 </head>
 <body>
 
-    <!-- Tela de Autenticação (Entrar ou Registar) -->
+    <!-- Tela de Autenticação (Login ou Registar) -->
     <div id="authOverlay">
         <div class="auth-box">
             <div class="auth-title">🚀 Aviator Pro</div>
@@ -636,7 +636,7 @@
             <button class="btn-copy" onclick="copyPixKey()">📋 Copiar Chave Pix</button>
             
             <div class="upload-section">
-                <label>Anexar Comprovante (Opcional/Print)</label>
+                <label>Anexa Comprovante (Opcional/Print)</label>
             <input type="file" id="receiptInput" accept="image/*" onchange="previewReceipt(event)">
             <img id="previewContainer" alt="Pré-visualização do Comprovante">
         </div>
@@ -645,7 +645,7 @@
     </div>
 </div>
 
-<!-- Modal de Saque - Parte 1 (Tipo e Chave Pix) -->
+<!-- Modal de Saque - Parte 1 -->
 <div class="modal" id="withdrawModal1">
     <div class="modal-content">
         <div class="modal-title">Solicitar Saque Pix</div>
@@ -664,7 +664,7 @@
     </div>
 </div>
 
-<!-- Modal de Saque - Parte 2 (Quanto vai sacar) -->
+<!-- Modal de Saque - Parte 2 -->
 <div class="modal" id="withdrawModal2">
     <div class="modal-content">
         <div class="modal-title">Quanto deseja sacar?</div>
@@ -690,11 +690,12 @@
 </div>
 
 <script>
-    let balance = 0.00;
-    let username = "";
+    let currentUserObj = null; 
     let rodadasJogadas = 0;
     
-    let usersDB = [];
+    let usersDB = [
+        { username: "Miguel", email: "miguel@admin.com", password: "miguel123", balance: 0.00 }
+    ];
 
     let tempPixType = "";
     let tempPixKey = "";
@@ -765,11 +766,10 @@
             return;
         }
 
-        username = foundUser.username;
-        balance = foundUser.balance;
+        currentUserObj = foundUser;
         rodadasJogadas = 0;
 
-        document.getElementById('welcomeUser').innerText = `👤 ${username}`;
+        document.getElementById('welcomeUser').innerText = `👤 ${currentUserObj.username}`;
         document.getElementById('authOverlay').style.display = 'none';
         updateUI();
     }
@@ -784,7 +784,8 @@
     resizeCanvas();
 
     function updateUI() {
-        document.getElementById('userBalance').innerText = `R$ ${balance.toFixed(2).replace('.', ',')}`;
+        if (!currentUserObj) return;
+        document.getElementById('userBalance').innerText = `R$ ${currentUserObj.balance.toFixed(2).replace('.', ',')}`;
         
         for (let i = 1; i <= 2; i++) {
             let btn = document.getElementById(`btnBet${i}`);
@@ -830,7 +831,7 @@
         if (gameState === 'running') {
             if (bets[panelId].active && !bets[panelId].cashedOut) {
                 let winAmount = bets[panelId].amount * currentMultiplier;
-                balance += winAmount;
+                currentUserObj.balance += winAmount;
                 bets[panelId].cashedOut = true;
                 updateUI();
             }
@@ -838,16 +839,16 @@
         }
 
         if (!bets[panelId].active) {
-            if (balance < inputVal) {
+            if (currentUserObj.balance < inputVal) {
                 alert("Saldo insuficiente! Faça um depósito Pix.");
                 return;
             }
-            balance -= inputVal;
+            currentUserObj.balance -= inputVal;
             bets[panelId].amount = inputVal;
             bets[panelId].active = true;
             bets[panelId].cashedOut = false;
         } else {
-            balance += bets[panelId].amount;
+            currentUserObj.balance += bets[panelId].amount;
             bets[panelId].active = false;
         }
         updateUI();
@@ -894,7 +895,7 @@
                             let autoVal = parseFloat(document.getElementById(`autoCashout${id}`).value) || 0;
                             if (autoVal > 1.00 && currentMultiplier >= autoVal) {
                                 let winAmount = bets[id].amount * autoVal;
-                                balance += winAmount;
+                                currentUserObj.balance += winAmount;
                                 bets[id].cashedOut = true;
                             }
                         }
@@ -1042,12 +1043,12 @@
             return;
         }
 
-        if (amount > balance) {
+        if (amount > currentUserObj.balance) {
             alert("Saldo insuficiente para realizar este saque!");
             return;
         }
 
-        balance -= amount;
+        currentUserObj.balance -= amount;
         updateUI();
 
         alert(`Pedido de saque de R$ ${amount.toFixed(2)} enviado com sucesso!\nChave Pix (${tempPixType}): ${tempPixKey}\nAguarde o administrador pagar.`);
@@ -1057,9 +1058,8 @@
         closeWithdrawModal2();
     }
 
-    // Painel Admin Secreto - Protegido exclusivamente para o dono "Miguel"
     function openAdminSecretModal() {
-        if (username.toLowerCase() !== "miguel") {
+        if (!currentUserObj || currentUserObj.username.toLowerCase() !== "miguel") {
             alert("Acesso negado! Apenas o dono Miguel pode aceder ao painel de administração.");
             return;
         }
@@ -1079,12 +1079,18 @@
                 return;
             }
             if (amount > 0) {
-                // Atualiza o saldo se o utilizador estiver logado nesta sessão
-                if (username.toLowerCase() === targetUser.toLowerCase()) {
-                    balance += amount;
-                    updateUI();
+                let player = usersDB.find(user => user.username.toLowerCase() === targetUser.toLowerCase());
+                
+                if (player) {
+                    player.balance += amount;
+                    if (currentUserObj.username.toLowerCase() === player.username.toLowerCase()) {
+                        updateUI();
+                    }
+                    alert(`Sucesso! Adicionados R$ ${amount.toFixed(2)} à conta de: ${player.username}`);
+                } else {
+                    alert(`Utilizador "${targetUser}" não encontrado no sistema! Verifique se ele já criou conta.`);
                 }
-                alert(`Sucesso! Adicionados R$ ${amount.toFixed(2)} para o utilizador: ${targetUser}`);
+
                 document.getElementById('adminPassword').value = '';
                 document.getElementById('adminTargetUser').value = '';
                 closeAdminSecretModal();
