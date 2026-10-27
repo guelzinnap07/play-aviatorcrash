@@ -347,6 +347,45 @@
             font-weight: 600;
             cursor: pointer;
         }
+        .btn-admin-toggle {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            font-size: 0.75rem;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        .admin-panel {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .admin-panel.active {
+            display: flex;
+        }
+        .admin-panel input {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .btn-release {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
         .btn-close-modal {
             background: var(--border);
             color: white;
@@ -432,13 +471,21 @@
 
     <div class="modal" id="depositModal">
         <div class="modal-content">
-            <div class="modal-title">Depositar via Pix Real</div>
-            <div class="modal-desc">Copia a chave Pix abaixo, paga pelo teu banco e depois clica em liberar saldo:</div>
+            <div class="modal-title">Depositar via Pix</div>
+            <div class="modal-desc">Copia a chave Pix abaixo, faz a transferência pelo teu banco e envia o comprovativo para o dono do jogo liberar o saldo:</div>
             
             <div class="pix-key-box" id="pixKeyText">E0a694cd-c395-46f0-871e-af8be8bda386</div>
             
             <button class="btn-copy" onclick="copyPixKey()">📋 Copiar Chave Pix</button>
-            <button class="btn-action bet" onclick="simulatePixPayment()">Já Paguei! Adicionar R$ 100</button>
+            
+            <button class="btn-admin-toggle" onclick="toggleAdminPanel()">Painel do Dono (Liberar Saldo)</button>
+            
+            <div class="admin-panel" id="adminPanel">
+                <input type="password" id="adminPassword" placeholder="Senha de Admin">
+                <input type="number" id="adminAmount" placeholder="Valor a creditar (Ex: 50)" value="50">
+                <button class="btn-release" onclick="releaseAdminDeposit()">Liberar Saldo</button>
+            </div>
+
             <button class="btn-close-modal" onclick="closeDepositModal()">Fechar</button>
         </div>
     </div>
@@ -614,6 +661,7 @@
 
             addToHistory(targetCrash);
 
+            [1, 2].formatCache = true;
             [1, 2].forEach(id => {
                 if (bets[id].active && !bets[id].cashedOut) {
                     bets[id].active = false;
@@ -677,11 +725,29 @@
                 alert("Chave Pix copiada com sucesso!");
             });
         }
-        function simulatePixPayment() {
-            balance += 100.00;
-            updateUI();
-            closeDepositModal();
-            alert("Saldo creditado com sucesso! Divirtam-se a jogar.");
+        function toggleAdminPanel() {
+            let panel = document.getElementById('adminPanel');
+            panel.classList.toggle('active');
+        }
+        function releaseAdminDeposit() {
+            let pass = document.getElementById('adminPassword').value;
+            let amount = parseFloat(document.getElementById('adminAmount').value) || 0;
+
+            // Podes mudar a tua senha secreta aqui em baixo ("miguel123" por exemplo)
+            if (pass === "miguel123") {
+                if (amount > 0) {
+                    balance += amount;
+                    updateUI();
+                    closeDepositModal();
+                    alert(`Sucesso! Adicionados R$ ${amount.toFixed(2)} ao saldo.`);
+                    document.getElementById('adminPassword').value = '';
+                    document.getElementById('adminPanel').classList.remove('active');
+                } else {
+                    alert("Insere um valor válido.");
+                }
+            } else {
+                alert("Senha de administrador incorreta!");
+            }
         }
 
         updateUI();
@@ -689,4 +755,3 @@
     </script>
 </body>
 </html>
-     
