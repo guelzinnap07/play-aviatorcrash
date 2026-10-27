@@ -449,18 +449,21 @@
         let currentMultiplier = 1.00;
         let targetCrash = 1.00;
         let gameStartTime = 0;
+        let countdown = 5.0;
         
         let bets = {
-            1: { active: false, amount: 10, cashedOut: false, win: 0 },
-            2: { active: false, amount: 10, cashedOut: false, win: 0 }
+            1: { active: false, amount: 10, cashedOut: false },
+            2: { active: false, amount: 10, cashedOut: false }
         };
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
         function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
+            if (canvas && canvas.parentElement) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
@@ -468,40 +471,26 @@
         function updateUI() {
             document.getElementById('userBalance').innerText = `R$ ${balance.toFixed(2).replace('.', ',')}`;
             
-            let btn1 = document.getElementById('btnBet1');
-            if (gameState === 'running') {
-                if (bets[1].active && !bets[1].cashedOut) {
-                    btn1.innerText = `Retirar (R$ ${(bets[1].amount * currentMultiplier).toFixed(2)})`;
-                    btn1.className = 'btn-action cashout';
+            for (let i = 1; i <= 2; i++) {
+                let btn = document.getElementById(`btnBet${i}`);
+                let inputVal = parseFloat(document.getElementById(`betInput${i}`).value) || 10;
+                
+                if (gameState === 'running') {
+                    if (bets[i].active && !bets[i].cashedOut) {
+                        btn.innerText = `Retirar (R$ ${(bets[i].amount * currentMultiplier).toFixed(2)})`;
+                        btn.className = 'btn-action cashout';
+                        btn.disabled = false;
+                    } else {
+                        btn.innerText = bets[i].active ? 'Apostado' : 'Aguardando Próxima';
+                        btn.className = 'btn-action';
+                        btn.disabled = true;
+                    }
                 } else {
-                    btn1.innerText = bets[1].active ? 'Aguardando Próxima' : 'Apostado';
-                    btn1.className = 'btn-action';
-                    btn1.disabled = true;
+                    btn.innerText = bets[i].active ? 'Cancelar Aposta' : `Apostar (R$ ${inputVal.toFixed(2)})`;
+                    btn.className = 'btn-action';
+                    btn.style.background = bets[i].active ? 'var(--danger)' : 'var(--success)';
+                    btn.disabled = false;
                 }
-            } else {
-                let val1 = parseFloat(document.getElementById('betInput1').value) || 10;
-                btn1.innerText = bets[1].active ? 'Cancelar Aposta' : `Apostar (R$ ${val1.toFixed(2)})`;
-                btn1.className = bets[1].active ? 'btn-action' : 'btn-action bet';
-                btn1.style.background = bets[1].active ? 'var(--danger)' : 'var(--success)';
-                btn1.disabled = false;
-            }
-
-            let btn2 = document.getElementById('btnBet2');
-            if (gameState === 'running') {
-                if (bets[2].active && !bets[2].cashedOut) {
-                    btn2.innerText = `Retirar (R$ ${(bets[2].amount * currentMultiplier).toFixed(2)})`;
-                    btn2.className = 'btn-action cashout';
-                } else {
-                    btn2.innerText = bets[2].active ? 'Aguardando Próxima' : 'Apostado';
-                    btn2.className = 'btn-action';
-                    btn2.disabled = true;
-                }
-            } else {
-                let val2 = parseFloat(document.getElementById('betInput2').value) || 10;
-                btn2.innerText = bets[2].active ? 'Cancelar Aposta' : `Apostar (R$ ${val2.toFixed(2)})`;
-                btn2.className = bets[2].active ? 'btn-action' : 'btn-action bet';
-                btn2.style.background = bets[2].active ? 'var(--danger)' : 'var(--success)';
-                btn2.disabled = false;
             }
         }
 
@@ -556,38 +545,64 @@
             return Math.min(parseFloat(crash.toFixed(2)), 100.00);
         }
 
-        let countdown = 5.0;
         function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            try {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (gameState === 'waiting') {
-                countdown -= 0.05;
-                document.getElementById('displayMultiplier').innerText = `${countdown.toFixed(1)}s`;
-                document.getElementById('displayStatus').innerText = 'Próxima rodada em...';
-                
-                if (countdown <= 0) {
-                    startNewGame();
-                }
-            } else if (gameState === 'running') {
-                let elapsed = (Date.now() - gameStartTime) / 1000;
-                currentMultiplier = 1.00 + (elapsed * elapsed * 0.15) + (elapsed * 0.4);
+                if (gameState === 'waiting') {
+                    countdown -= 0.05;
+                    document.getElementById('displayMultiplier').innerText = `${Math.max(0, countdown).toFixed(1)}s`;
+                    document.getElementById('displayStatus').innerText = 'Próxima rodada em...';
+                    document.getElementById('displayStatus').style.color = 'var(--text-muted)';
+                    
+                    if (countdown <= 0) {
+                        startNewGame();
+                    }
+                } else if (gameState === 'running') {
+                    let elapsed = (Date.now() - gameStartTime) / 1000;
+                    currentMultiplier = 1.00 + (elapsed * elapsed * 0.15) + (elapsed * 0.4);
 
-                if (currentMultiplier >= targetCrash) {
-                    currentMultiplier = targetCrash;
-                    triggerCrash();
-                } else {
-                    document.getElementById('displayMultiplier').innerText = `${currentMultiplier.toFixed(2)}x`;
-                    document.getElementById('displayStatus').innerText = 'Subindo...';
+                    if (currentMultiplier >= targetCrash) {
+                        currentMultiplier = targetCrash;
+                        triggerCrash();
+                    } else {
+                        document.getElementById('displayMultiplier').innerText = `${currentMultiplier.toFixed(2)}x`;
+                        document.getElementById('displayStatus').innerText = 'Subindo...';
 
-                    [1, 2].forEach(id => {
-                        if (bets[id].active && !bets[id].cashedOut) {
-                            let autoVal = parseFloat(document.getElementById(`autoCashout${id}`).value) || 0;
-                            if (autoVal > 1.00 && currentMultiplier >= autoVal) {
-                                let winAmount = bets[id].amount * autoVal;
-                                balance += winAmount;
-                                bets[id].cashedOut = true;
+                        [1, 2].forEach(id => {
+                            if (bets[id].active && !bets[id].cashedOut) {
+                                let autoVal = parseFloat(document.getElementById(`autoCashout${id}`).value) || 0;
+                                if (autoVal > 1.00 && currentMultiplier >= autoVal) {
+                                    let winAmount = bets[id].amount * autoVal;
+                                    balance += winAmount;
+                                    bets[id].cashedOut = true;
+                                }
                             }
-                          });
+                        });
+                        updateUI();
+                    }
+                    drawFlightAnimation(elapsed);
+                } else if (gameState === 'crashed') {
+                    drawCrashAnimation();
+                }
+            } catch (e) {
+                console.error("Erro no loop:", e);
+            }
+
+            setTimeout(gameLoop, 50);
+        }
+
+        function startNewGame() {
+            gameState = 'running';
+            currentMultiplier = 1.00;
+            targetCrash = calculateCrashPoint();
+            gameStartTime = Date.now();
+
+            [1, 2].forEach(id => {
+                if (bets[id].active) {
+                    bets[id].cashedOut = false;
+                }
+            });
             updateUI();
         }
 
@@ -609,7 +624,6 @@
             setTimeout(() => {
                 countdown = 4.0;
                 gameState = 'waiting';
-                document.getElementById('displayStatus').style.color = 'var(--text-muted)';
                 [1, 2].forEach(id => { bets[id].active = false; });
                 updateUI();
             }, 3000);
@@ -675,4 +689,4 @@
     </script>
 </body>
 </html>
-        
+     
