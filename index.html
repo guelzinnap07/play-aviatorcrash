@@ -66,7 +66,7 @@
             font-size: 0.85rem;
             color: var(--text-muted);
         }
-        .login-input {
+        .login-input, .login-select {
             background: var(--bg-input);
             border: 1px solid var(--border);
             color: white;
@@ -108,14 +108,15 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            cursor: pointer;
         }
 
         .user-balance-box {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: var(--bg-input);
-            padding: 6px 12px;
+            padding: 6px 10px;
             border-radius: 20px;
             border: 1px solid var(--border);
         }
@@ -130,10 +131,21 @@
             background: var(--success);
             color: white;
             border: none;
-            padding: 4px 10px;
+            padding: 4px 8px;
             border-radius: 12px;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .btn-withdraw {
+            background: #1f6feb;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.75rem;
             cursor: pointer;
         }
 
@@ -345,6 +357,7 @@
             100% { transform: scale(1.02); }
         }
 
+        /* Modais */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -431,44 +444,6 @@
             display: none;
             margin-top: 4px;
         }
-        .btn-admin-toggle {
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            font-size: 0.75rem;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-        .admin-panel {
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            padding: 10px;
-            border-radius: 8px;
-            display: none;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .admin-panel.active {
-            display: flex;
-        }
-        .admin-panel input {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: white;
-            padding: 6px;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        .btn-release {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 8px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
         .btn-close-modal {
             background: var(--border);
             color: white;
@@ -477,6 +452,46 @@
             border-radius: 6px;
             font-weight: 600;
             cursor: pointer;
+        }
+
+        /* Painel Admin Secreto */
+        .admin-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        .admin-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .admin-content {
+            background: var(--bg-card);
+            border: 1px solid var(--danger);
+            border-radius: 14px;
+            padding: 20px;
+            width: 90%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+        .admin-content input, .admin-content select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.95rem;
+            outline: none;
         }
     </style>
 </head>
@@ -495,12 +510,13 @@
     </div>
 
     <header>
-        <div class="logo">🚀 Aviator Pro</div>
+        <div class="logo" onclick="openAdminSecretModal()">🚀 Aviator Pro</div>
         <div class="user-balance-box">
             <span id="welcomeUser" style="font-size: 0.8rem; color: var(--text-muted);"></span>
             <span>Saldo:</span>
             <span class="balance-amount" id="userBalance">R$ 0,00</span>
             <button class="btn-deposit" onclick="openDepositModal()">+ Pix</button>
+            <button class="btn-withdraw" onclick="openWithdrawModal1()">Sacar</button>
         </div>
     </header>
 
@@ -565,6 +581,7 @@
         </div>
     </div>
 
+    <!-- Modal de Depósito -->
     <div class="modal" id="depositModal">
         <div class="modal-content">
             <div class="modal-title">Depositar via Pix</div>
@@ -582,15 +599,51 @@
                 <img id="previewContainer" alt="Pré-visualização do Comprovante">
             </div>
 
-            <button class="btn-admin-toggle" onclick="toggleAdminPanel()">Painel do Dono (Liberar Saldo)</button>
-            
-            <div class="admin-panel" id="adminPanel">
-                <input type="password" id="adminPassword" placeholder="Senha de Admin">
-                <input type="number" id="adminAmount" placeholder="Valor a creditar (Ex: 50)" value="50">
-                <button class="btn-release" onclick="releaseAdminDeposit()">Liberar Saldo</button>
-            </div>
-
             <button class="btn-close-modal" onclick="closeDepositModal()">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Saque - Parte 1 (Tipo e Chave Pix) -->
+    <div class="modal" id="withdrawModal1">
+        <div class="modal-content">
+            <div class="modal-title">Solicitar Saque Pix</div>
+            <div class="modal-desc">Escolha o tipo de chave Pix e digite os dados para receber o seu dinheiro:</div>
+            
+            <select id="pixType" class="login-select">
+                <option value="Telefone">Telefone</option>
+                <option value="CPF">CPF</option>
+                <option value="CNPJ">CNPJ</option>
+            </select>
+            
+            <input type="text" id="pixKeyInput" class="login-input" placeholder="Digite a sua chave Pix">
+            
+            <button class="btn-login" onclick="goToWithdrawModal2()">Avançar</button>
+            <button class="btn-close-modal" onclick="closeWithdrawModal1()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Saque - Parte 2 (Quanto vai sacar) -->
+    <div class="modal" id="withdrawModal2">
+        <div class="modal-content">
+            <div class="modal-title">Quanto deseja sacar?</div>
+            <div class="modal-desc">Insira o valor que quer retirar do seu saldo atual:</div>
+            
+            <input type="number" id="withdrawAmountInput" class="login-input" placeholder="Ex: 50.00" step="5">
+            
+            <button class="btn-login" onclick="confirmWithdraw()">Confirmar Saque</button>
+            <button class="btn-close-modal" onclick="closeWithdrawModal2()">Voltar</button>
+        </div>
+    </div>
+
+    <!-- Painel de Administrador Secreto -->
+    <div class="admin-modal" id="adminSecretModal">
+        <div class="admin-content">
+            <div class="modal-title" style="color: var(--danger);">Painel Secreto do Dono</div>
+            <input type="password" id="adminPassword" placeholder="Senha de Administrador">
+            <input type="text" id="adminTargetUser" placeholder="Nome de Utilizador do Jogador">
+            <input type="number" id="adminAmount" placeholder="Valor a creditar (Ex: 50)" value="50">
+            <button class="btn-release" onclick="releaseAdminDeposit()">Liberar Saldo para o Utilizador</button>
+            <button class="btn-close-modal" onclick="closeAdminSecretModal()">Fechar Painel</button>
         </div>
     </div>
 
@@ -599,6 +652,12 @@
         let username = "";
         let userEmail = "";
         let userPassword = "";
+        let rodadasJogadas = 0;
+        let registeredUsers = [];
+
+        let tempPixType = "";
+        let tempPixKey = "";
+
         let gameState = 'waiting';
         let currentMultiplier = 1.00;
         let targetCrash = 1.00;
@@ -623,9 +682,17 @@
                 return;
             }
 
+            if (registeredUsers.includes(u)) {
+                alert("Este nome de utilizador já está a ser utilizado! Escolhe outro.");
+                return;
+            }
+
+            registeredUsers.push(u);
             username = u;
             userEmail = e;
             userPassword = p;
+            rodadasJogadas = 0;
+
             document.getElementById('welcomeUser').innerText = `👤 ${username}`;
             document.getElementById('loginOverlay').style.display = 'none';
         }
@@ -710,6 +777,11 @@
         }
 
         function calculateCrashPoint() {
+            rodadasJogadas++;
+            if (rodadasJogadas <= 5) {
+                let crashRápido = 1.00 + (Math.random() * 0.20);
+                return parseFloat(crashRápido.toFixed(2));
+            }
             let rand = Math.random();
             if (rand < 0.04) return 1.00;
             let crash = 0.99 / (1.0 - Math.random());
@@ -860,24 +932,79 @@
                 alert("Comprovativo anexado com sucesso!");
             }
         }
-        function toggleAdminPanel() {
-            let panel = document.getElementById('adminPanel');
-            panel.classList.toggle('active');
+
+        function openWithdrawModal1() {
+            document.getElementById('withdrawModal1').classList.add('active');
+        }
+        function closeWithdrawModal1() {
+            document.getElementById('withdrawModal1').classList.remove('active');
+        }
+        function goToWithdrawModal2() {
+            let type = document.getElementById('pixType').value;
+            let key = document.getElementById('pixKeyInput').value.trim();
+
+            if (key === "") {
+                alert("Por favor, insere a tua chave Pix!");
+                return;
+            }
+
+            tempPixType = type;
+            tempPixKey = key;
+
+            document.getElementById('withdrawModal1').classList.remove('active');
+            document.getElementById('withdrawModal2').classList.add('active');
+        }
+        function closeWithdrawModal2() {
+            document.getElementById('withdrawModal2').classList.remove('active');
+        }
+        function confirmWithdraw() {
+            let amount = parseFloat(document.getElementById('withdrawAmountInput').value) || 0;
+
+            if (amount <= 0) {
+                alert("Insere um valor válido para saque.");
+                return;
+            }
+
+            if (amount > balance) {
+                alert("Saldo insuficiente para realizar este saque!");
+                return;
+            }
+
+            balance -= amount;
+            updateUI();
+
+            alert(`Pedido de saque de R$ ${amount.toFixed(2)} enviado com sucesso!\nChave Pix (${tempPixType}): ${tempPixKey}\nAguarde o administrador pagar.`);
+            
+            document.getElementById('pixKeyInput').value = "";
+            document.getElementById('withdrawAmountInput').value = "";
+            closeWithdrawModal2();
+        }
+
+        function openAdminSecretModal() {
+            document.getElementById('adminSecretModal').classList.add('active');
+        }
+        function closeAdminSecretModal() {
+            document.getElementById('adminSecretModal').classList.remove('active');
         }
         function releaseAdminDeposit() {
             let pass = document.getElementById('adminPassword').value;
+            let targetUser = document.getElementById('adminTargetUser').value.trim();
             let amount = parseFloat(document.getElementById('adminAmount').value) || 0;
 
             if (pass === "miguel123") {
+                if (targetUser === "") {
+                    alert("Insere o nome de utilizador do jogador!");
+                    return;
+                }
                 if (amount > 0) {
-                    balance += amount;
-                    updateUI();
-                    closeDepositModal();
-                    alert(`Sucesso! Adicionados R$ ${amount.toFixed(2)} ao saldo de ${username}.`);
+                    if (username.toLowerCase() === targetUser.toLowerCase()) {
+                        balance += amount;
+                        updateUI();
+                    }
+                    alert(`Sucesso! Adicionados R$ ${amount.toFixed(2)} para o utilizador: ${targetUser}`);
                     document.getElementById('adminPassword').value = '';
-                    document.getElementById('adminPanel').classList.remove('active');
-                    document.getElementById('previewContainer').style.display = 'none';
-                    document.getElementById('receiptInput').value = '';
+                    document.getElementById('adminTargetUser').value = '';
+                    closeAdminSecretModal();
                 } else {
                     alert("Insere um valor válido.");
                 }
@@ -889,5 +1016,3 @@
         updateUI();
         gameLoop();
     </script>
-</body>
-</html>
