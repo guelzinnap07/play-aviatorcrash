@@ -35,8 +35,8 @@
             padding-bottom: 30px;
         }
 
-        /* Tela de Login Inicial */
-        #loginOverlay {
+        /* Tela de Autenticação (Login / Registo) */
+        #authOverlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-dark);
@@ -45,7 +45,7 @@
             align-items: center;
             z-index: 2000;
         }
-        .login-box {
+        .auth-box {
             background: var(--bg-card);
             border: 1px solid var(--border);
             padding: 24px;
@@ -57,16 +57,42 @@
             gap: 12px;
             text-align: center;
         }
-        .login-title {
+        .auth-title {
             font-size: 1.4rem;
             font-weight: 800;
             color: var(--primary);
         }
-        .login-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
+        .auth-tabs {
+            display: flex;
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
         }
-        .login-input, .login-select {
+        .auth-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .auth-tab.active {
+            background: var(--border);
+            color: white;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .auth-form.hidden {
+            display: none;
+        }
+        .auth-input {
             background: var(--bg-input);
             border: 1px solid var(--border);
             color: white;
@@ -76,7 +102,7 @@
             outline: none;
             width: 100%;
         }
-        .btn-login {
+        .btn-auth {
             background: var(--success);
             color: white;
             border: none;
@@ -454,7 +480,7 @@
             cursor: pointer;
         }
 
-        /* Painel Admin Secreto */
+        /* Painel Admin Secreto (Apenas para o Miguel) */
         .admin-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -497,15 +523,31 @@
 </head>
 <body>
 
-    <!-- Tela de Login Inicial -->
-    <div id="loginOverlay">
-        <div class="login-box">
-            <div class="login-title">🚀 Aviator Pro</div>
-            <div class="login-desc">Cria a tua conta para começar a jogar:</div>
-            <input type="text" id="loginUsername" class="login-input" placeholder="Nome de Utilizador">
-            <input type="email" id="loginEmail" class="login-input" placeholder="E-mail">
-            <input type="password" id="loginPassword" class="login-input" placeholder="Criar Senha">
-            <button class="btn-login" onclick="realizeLogin()">Entrar no Jogo</button>
+    <!-- Tela de Autenticação (Entrar ou Registar) -->
+    <div id="authOverlay">
+        <div class="auth-box">
+            <div class="auth-title">🚀 Aviator Pro</div>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tabLoginBtn" onclick="switchAuthTab('login')">Entrar</button>
+                <button class="auth-tab" id="tabRegisterBtn" onclick="switchAuthTab('register')">Registar</button>
+            </div>
+
+            <!-- Formulário de Login -->
+            <div id="loginForm" class="auth-form">
+                <input type="text" id="loginUser" class="auth-input" placeholder="Nome de Utilizador">
+                <input type="email" id="loginEmail" class="auth-input" placeholder="E-mail">
+                <input type="password" id="loginPass" class="auth-input" placeholder="Senha">
+                <button class="btn-auth" onclick="realizeLogin()">Entrar no Jogo</button>
+            </div>
+
+            <!-- Formulário de Registo -->
+            <div id="registerForm" class="auth-form hidden">
+                <input type="text" id="regUser" class="auth-input" placeholder="Nome de Utilizador">
+                <input type="email" id="regEmail" class="auth-input" placeholder="E-mail">
+                <input type="password" id="regPass" class="auth-input" placeholder="Criar Senha">
+                <button class="btn-auth" onclick="realizeRegister()">Criar Conta</button>
+            </div>
         </div>
     </div>
 
@@ -595,424 +637,467 @@
             
             <div class="upload-section">
                 <label>Anexar Comprovante (Opcional/Print)</label>
-                <input type="file" id="receiptInput" accept="image/*" onchange="previewReceipt(event)">
-                <img id="previewContainer" alt="Pré-visualização do Comprovante">
-            </div>
-
-            <button class="btn-close-modal" onclick="closeDepositModal()">Fechar</button>
+            <input type="file" id="receiptInput" accept="image/*" onchange="previewReceipt(event)">
+            <img id="previewContainer" alt="Pré-visualização do Comprovante">
         </div>
+
+        <button class="btn-close-modal" onclick="closeDepositModal()">Fechar</button>
     </div>
+</div>
 
-    <!-- Modal de Saque - Parte 1 (Tipo e Chave Pix) -->
-    <div class="modal" id="withdrawModal1">
-        <div class="modal-content">
-            <div class="modal-title">Solicitar Saque Pix</div>
-            <div class="modal-desc">Escolha o tipo de chave Pix e digite os dados para receber o seu dinheiro:</div>
-            
-            <select id="pixType" class="login-select">
-                <option value="Telefone">Telefone</option>
-                <option value="CPF">CPF</option>
-                <option value="CNPJ">CNPJ</option>
-            </select>
-            
-            <input type="text" id="pixKeyInput" class="login-input" placeholder="Digite a sua chave Pix">
-            
-            <button class="btn-login" onclick="goToWithdrawModal2()">Avançar</button>
-            <button class="btn-close-modal" onclick="closeWithdrawModal1()">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Modal de Saque - Parte 2 (Quanto vai sacar) -->
-    <div class="modal" id="withdrawModal2">
-        <div class="modal-content">
-            <div class="modal-title">Quanto deseja sacar?</div>
-            <div class="modal-desc">Insira o valor que quer retirar do seu saldo atual:</div>
-            
-            <input type="number" id="withdrawAmountInput" class="login-input" placeholder="Ex: 50.00" step="5">
-            
-            <button class="btn-login" onclick="confirmWithdraw()">Confirmar Saque</button>
-            <button class="btn-close-modal" onclick="closeWithdrawModal2()">Voltar</button>
-        </div>
-    </div>
-
-    <!-- Painel de Administrador Secreto -->
-    <div class="admin-modal" id="adminSecretModal">
-        <div class="admin-content">
-            <div class="modal-title" style="color: var(--danger);">Painel Secreto do Dono</div>
-            <input type="password" id="adminPassword" placeholder="Senha de Administrador">
-            <input type="text" id="adminTargetUser" placeholder="Nome de Utilizador do Jogador">
-            <input type="number" id="adminAmount" placeholder="Valor a creditar (Ex: 50)" value="50">
-            <button class="btn-release" onclick="releaseAdminDeposit()">Liberar Saldo para o Utilizador</button>
-            <button class="btn-close-modal" onclick="closeAdminSecretModal()">Fechar Painel</button>
-        </div>
-    </div>
-
-    <script>
-        let balance = 0.00;
-        let username = "";
-        let userEmail = "";
-        let userPassword = "";
-        let rodadasJogadas = 0;
-        let registeredUsers = [];
-
-        let tempPixType = "";
-        let tempPixKey = "";
-
-        let gameState = 'waiting';
-        let currentMultiplier = 1.00;
-        let targetCrash = 1.00;
-        let gameStartTime = 0;
-        let countdown = 5.0;
+<!-- Modal de Saque - Parte 1 (Tipo e Chave Pix) -->
+<div class="modal" id="withdrawModal1">
+    <div class="modal-content">
+        <div class="modal-title">Solicitar Saque Pix</div>
+        <div class="modal-desc">Escolha o tipo de chave Pix e digite os dados para receber o seu dinheiro:</div>
         
-        let bets = {
-            1: { active: false, amount: 10, cashedOut: false },
-            2: { active: false, amount: 10, cashedOut: false }
-        };
+        <select id="pixType" class="login-select">
+            <option value="Telefone">Telefone</option>
+            <option value="CPF">CPF</option>
+            <option value="CNPJ">CNPJ</option>
+        </select>
+        
+        <input type="text" id="pixKeyInput" class="login-input" placeholder="Digite a sua chave Pix">
+        
+        <button class="btn-auth" onclick="goToWithdrawModal2()">Avançar</button>
+        <button class="btn-close-modal" onclick="closeWithdrawModal1()">Cancelar</button>
+    </div>
+</div>
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+<!-- Modal de Saque - Parte 2 (Quanto vai sacar) -->
+<div class="modal" id="withdrawModal2">
+    <div class="modal-content">
+        <div class="modal-title">Quanto deseja sacar?</div>
+        <div class="modal-desc">Insira o valor que quer retirar do seu saldo atual:</div>
+        
+        <input type="number" id="withdrawAmountInput" class="login-input" placeholder="Ex: 50.00" step="5">
+        
+        <button class="btn-auth" onclick="confirmWithdraw()">Confirmar Saque</button>
+        <button class="btn-close-modal" onclick="closeWithdrawModal2()">Voltar</button>
+    </div>
+</div>
 
-        function realizeLogin() {
-            let u = document.getElementById('loginUsername').value.trim();
-            let e = document.getElementById('loginEmail').value.trim();
-            let p = document.getElementById('loginPassword').value.trim();
+<!-- Painel de Administrador Secreto (Exclusivo para o Miguel) -->
+<div class="admin-modal" id="adminSecretModal">
+    <div class="admin-content">
+        <div class="modal-title" style="color: var(--danger);">Painel Secreto do Dono (Miguel)</div>
+        <input type="password" id="adminPassword" placeholder="Senha de Administrador">
+        <input type="text" id="adminTargetUser" placeholder="Nome de Utilizador do Jogador">
+        <input type="number" id="adminAmount" placeholder="Valor a creditar (Ex: 50)" value="50">
+        <button class="btn-release" onclick="releaseAdminDeposit()" style="background:var(--success); color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer;">Liberar Saldo</button>
+        <button class="btn-close-modal" onclick="closeAdminSecretModal()">Fechar Painel</button>
+    </div>
+</div>
 
-            if (u === "" || e === "" || p === "") {
-                alert("Por favor, preenche todos os campos (Utilizador, E-mail e Senha)!");
-                return;
-            }
+<script>
+    let balance = 0.00;
+    let username = "";
+    let rodadasJogadas = 0;
+    
+    let usersDB = [];
 
-            if (registeredUsers.includes(u)) {
-                alert("Este nome de utilizador já está a ser utilizado! Escolhe outro.");
-                return;
-            }
+    let tempPixType = "";
+    let tempPixKey = "";
 
-            registeredUsers.push(u);
-            username = u;
-            userEmail = e;
-            userPassword = p;
-            rodadasJogadas = 0;
+    let gameState = 'waiting';
+    let currentMultiplier = 1.00;
+    let targetCrash = 1.00;
+    let gameStartTime = 0;
+    let countdown = 5.0;
+    
+    let bets = {
+        1: { active: false, amount: 10, cashedOut: false },
+        2: { active: false, amount: 10, cashedOut: false }
+    };
 
-            document.getElementById('welcomeUser').innerText = `👤 ${username}`;
-            document.getElementById('loginOverlay').style.display = 'none';
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function switchAuthTab(tab) {
+        if (tab === 'login') {
+            document.getElementById('tabLoginBtn').classList.add('active');
+            document.getElementById('tabRegisterBtn').classList.remove('active');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+        } else {
+            document.getElementById('tabRegisterBtn').classList.add('active');
+            document.getElementById('tabLoginBtn').classList.remove('active');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+        }
+    }
+
+    function realizeRegister() {
+        let u = document.getElementById('regUser').value.trim();
+        let e = document.getElementById('regEmail').value.trim();
+        let p = document.getElementById('regPass').value.trim();
+
+        if (u === "" || e === "" || p === "") {
+            alert("Por favor, preencha todos os campos para se registar!");
+            return;
         }
 
-        function resizeCanvas() {
-            if (canvas && canvas.parentElement) {
-                canvas.width = canvas.parentElement.clientWidth;
-                canvas.height = canvas.parentElement.clientHeight;
-            }
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        function updateUI() {
-            document.getElementById('userBalance').innerText = `R$ ${balance.toFixed(2).replace('.', ',')}`;
-            
-            for (let i = 1; i <= 2; i++) {
-                let btn = document.getElementById(`btnBet${i}`);
-                let inputVal = parseFloat(document.getElementById(`betInput${i}`).value) || 10;
-                
-                if (gameState === 'running') {
-                    if (bets[i].active && !bets[i].cashedOut) {
-                        btn.innerText = `Retirar (R$ ${(bets[i].amount * currentMultiplier).toFixed(2)})`;
-                        btn.className = 'btn-action cashout';
-                        btn.disabled = false;
-                    } else {
-                        btn.innerText = bets[i].active ? 'Apostado' : 'Aguardando Próxima';
-                        btn.className = 'btn-action';
-                        btn.disabled = true;
-                    }
-                } else {
-                    btn.innerText = bets[i].active ? 'Cancelar Aposta' : `Apostar (R$ ${inputVal.toFixed(2)})`;
-                    btn.className = 'btn-action';
-                    btn.style.background = bets[i].active ? 'var(--danger)' : 'var(--success)';
-                    btn.disabled = false;
-                }
-            }
+        let userExists = usersDB.some(user => user.username.toLowerCase() === u.toLowerCase());
+        if (userExists) {
+            alert("Este nome de utilizador já está a ser utilizado! Escolha outro.");
+            return;
         }
 
-        function setBet(panelId, value) {
-            if (gameState !== 'waiting') return;
-            document.getElementById(`betInput${panelId}`).value = value.toFixed(2);
-            updateUI();
+        usersDB.push({ username: u, email: e, password: p, balance: 0.00 });
+        alert("Conta criada com sucesso! Agora vá na aba 'Entrar' e faça o login.");
+        switchAuthTab('login');
+    }
+
+    function realizeLogin() {
+        let u = document.getElementById('loginUser').value.trim();
+        let e = document.getElementById('loginEmail').value.trim();
+        let p = document.getElementById('loginPass').value.trim();
+
+        if (u === "" || e === "" || p === "") {
+            alert("Por favor, preencha o Nome, E-mail e Senha!");
+            return;
         }
 
-        function adjustBet(panelId, delta) {
-            if (gameState !== 'waiting') return;
-            let input = document.getElementById(`betInput${panelId}`);
-            let val = parseFloat(input.value) || 0;
-            val = Math.max(5, val + delta);
-            input.value = val.toFixed(2);
-            updateUI();
+        let foundUser = usersDB.find(user => user.username.toLowerCase() === u.toLowerCase() && user.password === p);
+
+        if (!foundUser) {
+            alert("Utilizador não encontrado ou senha incorreta! Verifique os dados ou crie uma conta.");
+            return;
         }
 
-        function toggleBet(panelId) {
-            let inputVal = parseFloat(document.getElementById(`betInput${panelId}`).value) || 0;
+        username = foundUser.username;
+        balance = foundUser.balance;
+        rodadasJogadas = 0;
+
+        document.getElementById('welcomeUser').innerText = `👤 ${username}`;
+        document.getElementById('authOverlay').style.display = 'none';
+        updateUI();
+    }
+
+    function resizeCanvas() {
+        if (canvas && canvas.parentElement) {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function updateUI() {
+        document.getElementById('userBalance').innerText = `R$ ${balance.toFixed(2).replace('.', ',')}`;
+        
+        for (let i = 1; i <= 2; i++) {
+            let btn = document.getElementById(`btnBet${i}`);
+            let inputVal = parseFloat(document.getElementById(`betInput${i}`).value) || 10;
             
             if (gameState === 'running') {
-                if (bets[panelId].active && !bets[panelId].cashedOut) {
-                    let winAmount = bets[panelId].amount * currentMultiplier;
-                    balance += winAmount;
-                    bets[panelId].cashedOut = true;
+                if (bets[i].active && !bets[i].cashedOut) {
+                    btn.innerText = `Retirar (R$ ${(bets[i].amount * currentMultiplier).toFixed(2)})`;
+                    btn.className = 'btn-action cashout';
+                    btn.disabled = false;
+                } else {
+                    btn.innerText = bets[i].active ? 'Apostado' : 'Aguardando Próxima';
+                    btn.className = 'btn-action';
+                    btn.disabled = true;
+                }
+            } else {
+                btn.innerText = bets[i].active ? 'Cancelar Aposta' : `Apostar (R$ ${inputVal.toFixed(2)})`;
+                btn.className = 'btn-action';
+                btn.style.background = bets[i].active ? 'var(--danger)' : 'var(--success)';
+                btn.disabled = false;
+            }
+        }
+    }
+
+    function setBet(panelId, value) {
+        if (gameState !== 'waiting') return;
+        document.getElementById(`betInput${panelId}`).value = value.toFixed(2);
+        updateUI();
+    }
+
+    function adjustBet(panelId, delta) {
+        if (gameState !== 'waiting') return;
+        let input = document.getElementById(`betInput${panelId}`);
+        let val = parseFloat(input.value) || 0;
+        val = Math.max(5, val + delta);
+        input.value = val.toFixed(2);
+        updateUI();
+    }
+
+    function toggleBet(panelId) {
+        let inputVal = parseFloat(document.getElementById(`betInput${panelId}`).value) || 0;
+        
+        if (gameState === 'running') {
+            if (bets[panelId].active && !bets[panelId].cashedOut) {
+                let winAmount = bets[panelId].amount * currentMultiplier;
+                balance += winAmount;
+                bets[panelId].cashedOut = true;
+                updateUI();
+            }
+            return;
+        }
+
+        if (!bets[panelId].active) {
+            if (balance < inputVal) {
+                alert("Saldo insuficiente! Faça um depósito Pix.");
+                return;
+            }
+            balance -= inputVal;
+            bets[panelId].amount = inputVal;
+            bets[panelId].active = true;
+            bets[panelId].cashedOut = false;
+        } else {
+            balance += bets[panelId].amount;
+            bets[panelId].active = false;
+        }
+        updateUI();
+    }
+
+    function calculateCrashPoint() {
+        rodadasJogadas++;
+        if (rodadasJogadas <= 3) {
+            let crashRápido = 1.00 + (Math.random() * 0.20);
+            return parseFloat(crashRápido.toFixed(2));
+        }
+        let rand = Math.random();
+        if (rand < 0.04) return 1.00;
+        let crash = 0.99 / (1.0 - Math.random());
+        return Math.min(parseFloat(crash.toFixed(2)), 100.00);
+    }
+
+    function gameLoop() {
+        try {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState === 'waiting') {
+                countdown -= 0.05;
+                document.getElementById('displayMultiplier').innerText = `${Math.max(0, countdown).toFixed(1)}s`;
+                document.getElementById('displayStatus').innerText = 'Próxima rodada em...';
+                document.getElementById('displayStatus').style.color = 'var(--text-muted)';
+                
+                if (countdown <= 0) {
+                    startNewGame();
+                }
+            } else if (gameState === 'running') {
+                let elapsed = (Date.now() - gameStartTime) / 1000;
+                currentMultiplier = 1.00 + (elapsed * elapsed * 0.15) + (elapsed * 0.4);
+
+                if (currentMultiplier >= targetCrash) {
+                    currentMultiplier = targetCrash;
+                    triggerCrash();
+                } else {
+                    document.getElementById('displayMultiplier').innerText = `${currentMultiplier.toFixed(2)}x`;
+                    document.getElementById('displayStatus').innerText = 'Subindo...';
+
+                    [1, 2].forEach(id => {
+                        if (bets[id].active && !bets[id].cashedOut) {
+                            let autoVal = parseFloat(document.getElementById(`autoCashout${id}`).value) || 0;
+                            if (autoVal > 1.00 && currentMultiplier >= autoVal) {
+                                let winAmount = bets[id].amount * autoVal;
+                                balance += winAmount;
+                                bets[id].cashedOut = true;
+                            }
+                        }
+                    });
                     updateUI();
                 }
-                return;
+                drawFlightAnimation(elapsed);
+            } else if (gameState === 'crashed') {
+                drawCrashAnimation();
             }
+        } catch (e) {
+            console.error("Erro no loop:", e);
+        }
 
-            if (!bets[panelId].active) {
-                if (balance < inputVal) {
-                    alert("Saldo insuficiente! Faz um depósito Pix.");
-                    return;
-                }
-                balance -= inputVal;
-                bets[panelId].amount = inputVal;
-                bets[panelId].active = true;
-                bets[panelId].cashedOut = false;
-            } else {
-                balance += bets[panelId].amount;
-                bets[panelId].active = false;
+        setTimeout(gameLoop, 50);
+    }
+
+    function startNewGame() {
+        gameState = 'running';
+        currentMultiplier = 1.00;
+        targetCrash = calculateCrashPoint();
+        gameStartTime = Date.now();
+
+        [1, 2].forEach(id => {
+            if (bets[id].active) {
+                bets[id].cashedOut = false;
             }
-            updateUI();
-        }
-
-        function calculateCrashPoint() {
-            rodadasJogadas++;
-            if (rodadasJogadas <= 5) {
-                let crashRápido = 1.00 + (Math.random() * 0.20);
-                return parseFloat(crashRápido.toFixed(2));
-            }
-            let rand = Math.random();
-            if (rand < 0.04) return 1.00;
-            let crash = 0.99 / (1.0 - Math.random());
-            return Math.min(parseFloat(crash.toFixed(2)), 100.00);
-        }
-
-        function gameLoop() {
-            try {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                if (gameState === 'waiting') {
-                    countdown -= 0.05;
-                    document.getElementById('displayMultiplier').innerText = `${Math.max(0, countdown).toFixed(1)}s`;
-                    document.getElementById('displayStatus').innerText = 'Próxima rodada em...';
-                    document.getElementById('displayStatus').style.color = 'var(--text-muted)';
-                    
-                    if (countdown <= 0) {
-                        startNewGame();
-                    }
-                } else if (gameState === 'running') {
-                    let elapsed = (Date.now() - gameStartTime) / 1000;
-                    currentMultiplier = 1.00 + (elapsed * elapsed * 0.15) + (elapsed * 0.4);
-
-                    if (currentMultiplier >= targetCrash) {
-                        currentMultiplier = targetCrash;
-                        triggerCrash();
-                    } else {
-                        document.getElementById('displayMultiplier').innerText = `${currentMultiplier.toFixed(2)}x`;
-                        document.getElementById('displayStatus').innerText = 'Subindo...';
-
-                        [1, 2].forEach(id => {
-                            if (bets[id].active && !bets[id].cashedOut) {
-                                let autoVal = parseFloat(document.getElementById(`autoCashout${id}`).value) || 0;
-                                if (autoVal > 1.00 && currentMultiplier >= autoVal) {
-                                    let winAmount = bets[id].amount * autoVal;
-                                    balance += winAmount;
-                                    bets[id].cashedOut = true;
-                                }
-                            }
-                        });
-                        updateUI();
-                    }
-                    drawFlightAnimation(elapsed);
-                } else if (gameState === 'crashed') {
-                    drawCrashAnimation();
-                }
-            } catch (e) {
-                console.error("Erro no loop:", e);
-            }
-
-            setTimeout(gameLoop, 50);
-        }
-
-        function startNewGame() {
-            gameState = 'running';
-            currentMultiplier = 1.00;
-            targetCrash = calculateCrashPoint();
-            gameStartTime = Date.now();
-
-            [1, 2].forEach(id => {
-                if (bets[id].active) {
-                    bets[id].cashedOut = false;
-                }
-            });
-            updateUI();
-        }
-
-        function triggerCrash() {
-            gameState = 'crashed';
-            document.getElementById('displayMultiplier').innerText = `${targetCrash.toFixed(2)}x`;
-            document.getElementById('displayStatus').innerText = 'CRASHED!';
-            document.getElementById('displayStatus').style.color = 'var(--danger)';
-
-            addToHistory(targetCrash);
-
-            [1, 2].forEach(id => {
-                if (bets[id].active && !bets[id].cashedOut) {
-                    bets[id].active = false;
-                }
-            });
-            updateUI();
-
-            setTimeout(() => {
-                countdown = 4.0;
-                gameState = 'waiting';
-                [1, 2].forEach(id => { bets[id].active = false; });
-                updateUI();
-            }, 3000);
-        }
-
-        function addToHistory(val) {
-            let container = document.getElementById('historyContainer');
-            let badge = document.createElement('div');
-            badge.className = `hist-badge ${val < 2.0 ? 'low' : val < 10.0 ? 'mid' : 'high'}`;
-            badge.innerText = `${val.toFixed(2)}x`;
-            container.prepend(badge);
-            if (container.children.length > 10) container.lastChild.remove();
-        }
-
-        function drawFlightAnimation(t) {
-            let w = canvas.width;
-            let h = canvas.height;
-
-            ctx.beginPath();
-            ctx.moveTo(0, h);
-            ctx.quadraticCurveTo(w * 0.5, h * 0.8, w * Math.min(1, t / 10), h * Math.max(0.1, 1 - (currentMultiplier / 15)));
-            ctx.strokeStyle = 'var(--primary)';
-            ctx.lineWidth = 4;
-            ctx.stroke();
-
-            let planeX = w * Math.min(0.8, t / 10);
-            let planeY = h * Math.max(0.15, 1 - (currentMultiplier / 15));
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(planeX, planeY, 6, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        function drawCrashAnimation() {
-            let w = canvas.width;
-            let h = canvas.height;
-            ctx.fillStyle = 'rgba(218, 54, 51, 0.15)';
-            ctx.fillRect(0, 0, w, h);
-        }
-
-        function openDepositModal() {
-            document.getElementById('depositModal').classList.add('active');
-        }
-        function closeDepositModal() {
-            document.getElementById('depositModal').classList.remove('active');
-        }
-        function copyPixKey() {
-            let keyText = document.getElementById('pixKeyText').innerText;
-            navigator.clipboard.writeText(keyText).then(() => {
-                alert("Chave Pix copiada com sucesso!");
-            });
-        }
-        function previewReceipt(event) {
-            let reader = new FileReader();
-            reader.onload = function() {
-                let output = document.getElementById('previewContainer');
-                output.src = reader.result;
-                output.style.display = 'block';
-            };
-            if(event.target.files[0]) {
-                reader.readAsDataURL(event.target.files[0]);
-                alert("Comprovativo anexado com sucesso!");
-            }
-        }
-
-        function openWithdrawModal1() {
-            document.getElementById('withdrawModal1').classList.add('active');
-        }
-        function closeWithdrawModal1() {
-            document.getElementById('withdrawModal1').classList.remove('active');
-        }
-        function goToWithdrawModal2() {
-            let type = document.getElementById('pixType').value;
-            let key = document.getElementById('pixKeyInput').value.trim();
-
-            if (key === "") {
-                alert("Por favor, insere a tua chave Pix!");
-                return;
-            }
-
-            tempPixType = type;
-            tempPixKey = key;
-
-            document.getElementById('withdrawModal1').classList.remove('active');
-            document.getElementById('withdrawModal2').classList.add('active');
-        }
-        function closeWithdrawModal2() {
-            document.getElementById('withdrawModal2').classList.remove('active');
-        }
-        function confirmWithdraw() {
-            let amount = parseFloat(document.getElementById('withdrawAmountInput').value) || 0;
-
-            if (amount <= 0) {
-                alert("Insere um valor válido para saque.");
-                return;
-            }
-
-            if (amount > balance) {
-                alert("Saldo insuficiente para realizar este saque!");
-                return;
-            }
-
-            balance -= amount;
-            updateUI();
-
-            alert(`Pedido de saque de R$ ${amount.toFixed(2)} enviado com sucesso!\nChave Pix (${tempPixType}): ${tempPixKey}\nAguarde o administrador pagar.`);
-            
-            document.getElementById('pixKeyInput').value = "";
-            document.getElementById('withdrawAmountInput').value = "";
-            closeWithdrawModal2();
-        }
-
-        function openAdminSecretModal() {
-            document.getElementById('adminSecretModal').classList.add('active');
-        }
-        function closeAdminSecretModal() {
-            document.getElementById('adminSecretModal').classList.remove('active');
-        }
-        function releaseAdminDeposit() {
-            let pass = document.getElementById('adminPassword').value;
-            let targetUser = document.getElementById('adminTargetUser').value.trim();
-            let amount = parseFloat(document.getElementById('adminAmount').value) || 0;
-
-            if (pass === "miguel123") {
-                if (targetUser === "") {
-                    alert("Insere o nome de utilizador do jogador!");
-                    return;
-                }
-                if (amount > 0) {
-                    if (username.toLowerCase() === targetUser.toLowerCase()) {
-                        balance += amount;
-                        updateUI();
-                    }
-                    alert(`Sucesso! Adicionados R$ ${amount.toFixed(2)} para o utilizador: ${targetUser}`);
-                    document.getElementById('adminPassword').value = '';
-                    document.getElementById('adminTargetUser').value = '';
-                    closeAdminSecretModal();
-                } else {
-                    alert("Insere um valor válido.");
-                }
-            } else {
-                alert("Senha de administrador incorreta!");
-            }
-        }
-
+        });
         updateUI();
-        gameLoop();
-    </script>
+    }
+
+    function triggerCrash() {
+        gameState = 'crashed';
+        document.getElementById('displayMultiplier').innerText = `${targetCrash.toFixed(2)}x`;
+        document.getElementById('displayStatus').innerText = 'CRASHED!';
+        document.getElementById('displayStatus').style.color = 'var(--danger)';
+
+        addToHistory(targetCrash);
+
+        [1, 2].forEach(id => {
+            if (bets[id].active && !bets[id].cashedOut) {
+                bets[id].active = false;
+            }
+        });
+        updateUI();
+
+        setTimeout(() => {
+            countdown = 4.0;
+            gameState = 'waiting';
+            [1, 2].forEach(id => { bets[id].active = false; });
+            updateUI();
+        }, 3000);
+    }
+
+    function addToHistory(val) {
+        let container = document.getElementById('historyContainer');
+        let badge = document.createElement('div');
+        badge.className = `hist-badge ${val < 2.0 ? 'low' : val < 10.0 ? 'mid' : 'high'}`;
+        badge.innerText = `${val.toFixed(2)}x`;
+        container.prepend(badge);
+        if (container.children.length > 10) container.lastChild.remove();
+    }
+
+    function drawFlightAnimation(t) {
+        let w = canvas.width;
+        let h = canvas.height;
+
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        ctx.quadraticCurveTo(w * 0.5, h * 0.8, w * Math.min(1, t / 10), h * Math.max(0.1, 1 - (currentMultiplier / 15)));
+        ctx.strokeStyle = 'var(--primary)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        let planeX = w * Math.min(0.8, t / 10);
+        let planeY = h * Math.max(0.15, 1 - (currentMultiplier / 15));
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(planeX, planeY, 6, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawCrashAnimation() {
+        let w = canvas.width;
+        let h = canvas.height;
+        ctx.fillStyle = 'rgba(218, 54, 51, 0.15)';
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    function openDepositModal() {
+        document.getElementById('depositModal').classList.add('active');
+    }
+    function closeDepositModal() {
+        document.getElementById('depositModal').classList.remove('active');
+    }
+    function copyPixKey() {
+        let keyText = document.getElementById('pixKeyText').innerText;
+        navigator.clipboard.writeText(keyText).then(() => {
+            alert("Chave Pix copiada com sucesso!");
+        });
+    }
+    function previewReceipt(event) {
+        let reader = new FileReader();
+        reader.onload = function() {
+            let output = document.getElementById('previewContainer');
+            output.src = reader.result;
+            output.style.display = 'block';
+        };
+        if(event.target.files[0]) {
+            reader.readAsDataURL(event.target.files[0]);
+            alert("Comprovativo anexado com sucesso!");
+        }
+    }
+
+    function openWithdrawModal1() {
+        document.getElementById('withdrawModal1').classList.add('active');
+    }
+    function closeWithdrawModal1() {
+        document.getElementById('withdrawModal1').classList.remove('active');
+    }
+    function goToWithdrawModal2() {
+        let type = document.getElementById('pixType').value;
+        let key = document.getElementById('pixKeyInput').value.trim();
+
+        if (key === "") {
+            alert("Por favor, insira a sua chave Pix!");
+            return;
+        }
+
+        tempPixType = type;
+        tempPixKey = key;
+
+        document.getElementById('withdrawModal1').classList.remove('active');
+        document.getElementById('withdrawModal2').classList.add('active');
+    }
+    function closeWithdrawModal2() {
+        document.getElementById('withdrawModal2').classList.remove('active');
+    }
+    function confirmWithdraw() {
+        let amount = parseFloat(document.getElementById('withdrawAmountInput').value) || 0;
+
+        if (amount <= 0) {
+            alert("Insira um valor válido para saque.");
+            return;
+        }
+
+        if (amount > balance) {
+            alert("Saldo insuficiente para realizar este saque!");
+            return;
+        }
+
+        balance -= amount;
+        updateUI();
+
+        alert(`Pedido de saque de R$ ${amount.toFixed(2)} enviado com sucesso!\nChave Pix (${tempPixType}): ${tempPixKey}\nAguarde o administrador pagar.`);
+        
+        document.getElementById('pixKeyInput').value = "";
+        document.getElementById('withdrawAmountInput').value = "";
+        closeWithdrawModal2();
+    }
+
+    // Painel Admin Secreto - Protegido exclusivamente para o dono "Miguel"
+    function openAdminSecretModal() {
+        if (username.toLowerCase() !== "miguel") {
+            alert("Acesso negado! Apenas o dono Miguel pode aceder ao painel de administração.");
+            return;
+        }
+        document.getElementById('adminSecretModal').classList.add('active');
+    }
+    function closeAdminSecretModal() {
+        document.getElementById('adminSecretModal').classList.remove('active');
+    }
+    function releaseAdminDeposit() {
+        let pass = document.getElementById('adminPassword').value;
+        let targetUser = document.getElementById('adminTargetUser').value.trim();
+        let amount = parseFloat(document.getElementById('adminAmount').value) || 0;
+
+        if (pass === "miguel123") {
+            if (targetUser === "") {
+                alert("Insira o nome de utilizador do jogador!");
+                return;
+            }
+            if (amount > 0) {
+                // Atualiza o saldo se o utilizador estiver logado nesta sessão
+                if (username.toLowerCase() === targetUser.toLowerCase()) {
+                    balance += amount;
+                    updateUI();
+                }
+                alert(`Sucesso! Adicionados R$ ${amount.toFixed(2)} para o utilizador: ${targetUser}`);
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('adminTargetUser').value = '';
+                closeAdminSecretModal();
+            } else {
+                alert("Insira um valor válido.");
+            }
+        } else {
+            alert("Senha de administrador incorreta!");
+        }
+    }
+
+    updateUI();
+    gameLoop();
+</script>
+</body>
+</html>
